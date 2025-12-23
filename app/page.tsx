@@ -1,65 +1,184 @@
-import Image from "next/image";
+"use client"
+
+import { Box, Flex, Portal } from "@chakra-ui/react";
+import { Sidebar } from "@/components/Sidebar";
+import { ChatPanel } from "@/components/ChatPanel";
+import { PreviewPanel } from "@/components/PreviewPanel";
+import { Dashboard } from "@/components/Dashboard";
+import { LandingPage } from "@/components/LandingPage";
+import { useState, useEffect } from "react";
+import { useProjectStore } from "@/store/useProjectStore";
+import { createClient } from "@/lib/supabase";
 
 export default function Home() {
+  const [view, setView] = useState<"landing" | "dashboard" | "editor">("landing");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [chatWidth, setChatWidth] = useState(450);
+  const [isResizing, setIsResizing] = useState(false);
+  const { setProject, setGuest } = useProjectStore();
+  const [user, setUser] = useState<any>(null);
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      if (data.user) {
+        setView("dashboard");
+        setGuest(false);
+      } else {
+        setView("landing");
+        setGuest(true);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        setGuest(false);
+      } else {
+        setGuest(true);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const startResizing = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  const stopResizing = () => {
+    setIsResizing(false);
+  };
+
+  const resize = (e: React.MouseEvent) => {
+    if (isResizing) {
+      let sidebarWidth = 0;
+      if (view === "editor") {
+        sidebarWidth = isSidebarCollapsed ? 60 : 250;
+      }
+      const newWidth = e.clientX - sidebarWidth;
+      // Allow shrinking it back down to 250
+      if (newWidth > 250 && newWidth < window.innerWidth - 300) {
+        setChatWidth(newWidth);
+      }
+    }
+  };
+
+  const handleNewProject = () => {
+    setProject(
+      null,
+      [],
+      '<!-- Your generated website will appear here -->\n<div style="display:flex;justify-content:center;align-items:center;height:100vh;color:#888;">Waiting for prompt...</div>'
+    );
+    setView("editor");
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <Flex 
+      h="100vh" 
+      w="full" 
+      bg="black" 
+      overflow="hidden"
+      onMouseMove={resize}
+      onMouseUp={stopResizing}
+      onMouseLeave={stopResizing}
+      position="relative"
+    >
+      {/* Overlay to capture mouse events while resizing (fixes iframe issue) */}
+      {isResizing && (
+        <Box
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          zIndex={9999}
+          cursor="col-resize"
+          bg="transparent"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      )}
+
+      {view === "landing" && (
+        <LandingPage 
+          onStart={handleNewProject}
+          onSeeDemo={() => setView("landing")} // Placeholder for demo
+          onLogin={() => {
+             // For simplicity, we trigger the login flow via Sidebar/Dashboard
+             // But for Landing, maybe we just go to Dashboard which has AuthModal
+             setView("dashboard");
+          }}
+        />
+      )}
+
+      {/* Sidebar */}
+      {view === "editor" && (
+        <Box
+          w={isSidebarCollapsed ? "60px" : "250px"}
+          transition={isResizing ? "none" : "width 0.2s"}
+          borderRight="1px solid"
+          borderColor="whiteAlpha.100"
+          display={{ base: "none", md: "block" }}
+        >
+          <Sidebar
+            onViewDashboard={() => setView("dashboard")}
+            isCollapsed={isSidebarCollapsed}
+            onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          />
+        </Box>
+      )}
+
+      {view === "dashboard" && (
+        <Dashboard
+          onOpenProject={(proj) => {
+            supabase.from("messages")
+              .select("*")
+              .eq("project_id", proj.id)
+              .order("created_at", { ascending: true })
+              .then(({ data: messages }) => {
+                setProject(proj.id, messages || [], proj.current_code || "");
+                setView("editor");
+              });
+          }}
+          onNewProject={handleNewProject}
+        />
+      )}
+
+      {view === "editor" && (
+        <Flex
+          flex="1"
+          direction={{ base: "column", md: "row" }}
+          overflow="hidden"
+        >
+          {/* Chat Panel */}
+          <Box
+            w={{ base: "full", md: `${chatWidth}px` }}
+            borderRight="1px solid"
+            borderColor="whiteAlpha.100"
+            transition={isResizing ? "none" : "width 0.2s"}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <ChatPanel />
+          </Box>
+
+          {/* Resize Handle */}
+          <Box
+            w="4px"
+            cursor="col-resize"
+            bg={isResizing ? "blue.500" : "transparent"}
+            _hover={{ bg: "blue.500" }}
+            onMouseDown={startResizing}
+            zIndex={10}
+            transition="background 0.2s"
+          />
+
+          {/* Preview Panel */}
+          <Box flex="1" position="relative">
+            <PreviewPanel />
+          </Box>
+        </Flex>
+      )}
+    </Flex>
   );
 }
