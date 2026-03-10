@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ZappyAI - Build Websites by Chatting",
+  title: "RivetsAI - Build Websites by Chatting",
   description: "AI-powered website builder",
 };
 

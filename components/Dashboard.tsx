@@ -4,7 +4,6 @@ import {
   Text,
   VStack,
   Button,
-  Icon,
   HStack,
   Spinner,
   Heading,
@@ -24,9 +23,10 @@ import {
   Edit2,
   Check,
   X,
-  Zap,
+  Cog,
   User,
 } from "lucide-react";
+import { FaCog } from "react-icons/fa";
 import { AuthModal } from "./AuthModal";
 
 interface DashboardProps {
@@ -107,7 +107,7 @@ export const Dashboard = ({ onOpenProject, onNewProject }: DashboardProps) => {
       .eq("id", editingId);
 
     setProjects((prev) =>
-      prev.map((p) => (p.id === editingId ? { ...p, title: editTitle } : p))
+      prev.map((p) => (p.id === editingId ? { ...p, title: editTitle } : p)),
     );
     setEditingId(null);
     useProjectStore.getState().refreshProjects();
@@ -147,7 +147,7 @@ export const Dashboard = ({ onOpenProject, onNewProject }: DashboardProps) => {
             <LogIn size={40} color="#00f0ff" />
           </Box>
           <Heading size="xl" mb={4}>
-            ZappyAI
+            RivetsAI
           </Heading>
           <Text color="gray.400" mb={8} fontSize="lg">
             Sign in to save your websites, manage projects, and deploy your
@@ -192,17 +192,17 @@ export const Dashboard = ({ onOpenProject, onNewProject }: DashboardProps) => {
             borderRadius="lg"
             boxShadow="0 0 15px rgba(0, 240, 255, 0.5)"
           >
-            <Zap size={20} fill="white" />
+            <FaCog size={20} fill="white" />
           </Box>
           <Text fontSize="xl" fontWeight="bold">
-            ZappyAI
+            RivetsAI
           </Text>
         </HStack>
 
         <HStack gap={4}>
-          <IconButton 
-            borderRadius="full" 
-            variant="ghost" 
+          <IconButton
+            borderRadius="full"
+            variant="ghost"
             color="whiteAlpha.800"
             _hover={{ color: "#00f0ff", bg: "whiteAlpha.100" }}
           >
@@ -246,9 +246,9 @@ export const Dashboard = ({ onOpenProject, onNewProject }: DashboardProps) => {
 
         {loading && (
           <Box py={20} textAlign="center">
-            <Spinner 
-              size="xl" 
-              color="#00f0ff" 
+            <Spinner
+              size="xl"
+              color="#00f0ff"
               boxShadow="0 0 20px rgba(0, 240, 255, 0.2)"
             />
             <Text mt={6} color="whiteAlpha.600" fontSize="lg">
@@ -267,13 +267,14 @@ export const Dashboard = ({ onOpenProject, onNewProject }: DashboardProps) => {
             color="whiteAlpha.400"
             className="glass-panel"
           >
-            <Folder size={64} style={{ margin: "0 auto 24px", opacity: 0.5, color: "#00f0ff" }} />
-            <Text fontSize="xl" mb={6}>No projects found yet.</Text>
-            <Button 
-              className="btn-secondary"
-              onClick={onNewProject}
-              px={8}
-            >
+            <Folder
+              size={64}
+              style={{ margin: "0 auto 24px", opacity: 0.5, color: "#00f0ff" }}
+            />
+            <Text fontSize="xl" mb={6}>
+              No projects found yet.
+            </Text>
+            <Button className="btn-secondary" onClick={onNewProject} px={8}>
               Start Creating
             </Button>
           </Box>
@@ -292,7 +293,7 @@ export const Dashboard = ({ onOpenProject, onNewProject }: DashboardProps) => {
               border="1px solid rgba(0, 240, 255, 0.1)"
               _hover={{
                 borderColor: "rgba(0, 240, 255, 0.4)",
-                boxShadow: "0 12px 40px rgba(0, 240, 255, 0.15)"
+                boxShadow: "0 12px 40px rgba(0, 240, 255, 0.15)",
               }}
             >
               {/* Mock Preview Window */}
@@ -318,18 +319,18 @@ export const Dashboard = ({ onOpenProject, onNewProject }: DashboardProps) => {
                   title="Preview Thumbnail"
                   tabIndex={-1}
                 />
-                <Box 
-                  position="absolute" 
-                  inset="0" 
-                  bg="transparent" 
+                <Box
+                  position="absolute"
+                  inset="0"
+                  bg="transparent"
                   _groupHover={{ bg: "rgba(0, 240, 255, 0.03)" }}
                   transition="all 0.3s"
                 />
-                <Box 
-                  position="absolute" 
-                  inset="0" 
-                  boxShadow="inset 0 0 40px rgba(0, 0, 0, 0.5)" 
-                  pointerEvents="none" 
+                <Box
+                  position="absolute"
+                  inset="0"
+                  boxShadow="inset 0 0 40px rgba(0, 0, 0, 0.5)"
+                  pointerEvents="none"
                 />
               </Box>
 
@@ -402,12 +403,18 @@ export const Dashboard = ({ onOpenProject, onNewProject }: DashboardProps) => {
                   )}
                 </HStack>
 
-                <Text fontSize="xs" color="whiteAlpha.400" mb={4} fontWeight="500">
-                  Last edited {new Date(project.updated_at).toLocaleDateString()}
+                <Text
+                  fontSize="xs"
+                  color="whiteAlpha.400"
+                  mb={4}
+                  fontWeight="500"
+                >
+                  Last edited{" "}
+                  {new Date(project.updated_at).toLocaleDateString()}
                 </Text>
 
-                <HStack 
-                  fontSize="sm" 
+                <HStack
+                  fontSize="sm"
                   fontWeight="bold"
                   color="#00f0ff"
                   transition="all 0.3s"

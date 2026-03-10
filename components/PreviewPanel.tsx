@@ -24,7 +24,7 @@ export const PreviewPanel = () => {
 
   // Script to inject for visual editing
   const EDIT_SCRIPT = `
-    <script id="zappy-edit-script">
+    <script id="rivets-edit-script">
       let selectedElement = null;
       let toolbar = null;
 
@@ -61,9 +61,9 @@ export const PreviewPanel = () => {
       }
 
       function createToolbar() {
-         if(document.getElementById('zappy-toolbar')) return;
+         if(document.getElementById('rivets-toolbar')) return;
          toolbar = document.createElement('div');
-         toolbar.id = 'zappy-toolbar';
+         toolbar.id = 'rivets-toolbar';
          toolbar.contentEditable = "false";
          toolbar.style.cssText = 'position: absolute; background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(15, 15, 15, 0.98) 100%); color: white; padding: 16px; border-radius: 16px; z-index: 2147483647; display: none; box-shadow: 0 12px 48px rgba(0,0,0,0.8), 0 0 0 1px rgba(0, 240, 255, 0.15) inset; font-family: system-ui, -apple-system, sans-serif; gap: 20px; align-items: flex-start; border: 1px solid rgba(0, 240, 255, 0.2); flex-wrap: wrap; max-width: 95vw; backdrop-filter: blur(20px); user-select: none; transform: translateX(-50%); transition: top 0.25s cubic-bezier(0.4, 0, 0.2, 1), left 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s;';
          
@@ -361,7 +361,7 @@ export const PreviewPanel = () => {
       };
       const onMouseUp = () => { isDragging = false; draggedEl = null; document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); };
       const onElementMouseDown = (e) => {
-         if (e.target.closest('#zappy-toolbar')) return;
+         if (e.target.closest('#rivets-toolbar')) return;
          const el = e.currentTarget; if (!el.dataset.draggable) return;
          e.preventDefault(); isDragging = true; draggedEl = el; startX = e.clientX; startY = e.clientY;
          const c = window.getComputedStyle(el); if (c.position === 'static') el.style.position = 'relative';
@@ -379,7 +379,7 @@ export const PreviewPanel = () => {
           if(toolbar) toolbar.remove();
           if(selectedElement) { selectedElement.style.outline = 'none'; selectedElement.style.cursor = ''; delete selectedElement.dataset.draggable; }
           document.body.removeAttribute('contenteditable');
-          const myScript = document.getElementById('zappy-edit-script');
+          const myScript = document.getElementById('rivets-edit-script');
           if(myScript) myScript.remove();
           window.parent.postMessage({ type: 'SAVE_CODE', html: document.documentElement.outerHTML }, '*');
         }
@@ -387,7 +387,7 @@ export const PreviewPanel = () => {
 
       document.addEventListener('click', (e) => {
         if (document.body.isContentEditable) {
-           if(e.target.closest('#zappy-toolbar')) return;
+           if(e.target.closest('#rivets-toolbar')) return;
            e.preventDefault(); e.stopPropagation();
            if (selectedElement) selectedElement.style.outline = 'none';
            selectedElement = e.target;
@@ -455,7 +455,7 @@ export const PreviewPanel = () => {
       // We are TURNING OFF editing -> Request code to save
       iframeRef.current?.contentWindow?.postMessage(
         { type: "REQUEST_CODE" },
-        "*"
+        "*",
       );
     } else {
       // We are TURNING ON editing
@@ -464,7 +464,7 @@ export const PreviewPanel = () => {
       setTimeout(() => {
         iframeRef.current?.contentWindow?.postMessage(
           { type: "TOGGLE_EDIT", isEditing: true },
-          "*"
+          "*",
         );
       }, 100);
     }
@@ -490,10 +490,10 @@ export const PreviewPanel = () => {
     zip.file("index.html", currentCode);
     zip.file(
       "README.md",
-      `# ZappyAI Generated Project\n\nTo run this project:\n1. Open index.html in your browser.\n2. That's it!`
+      `# RivetsAI Generated Project\n\nTo run this project:\n1. Open index.html in your browser.\n2. That's it!`,
     );
     const content = await zip.generateAsync({ type: "blob" });
-    saveAs(content, "zappy-project.zip");
+    saveAs(content, "rivets-project.zip");
   };
 
   return (

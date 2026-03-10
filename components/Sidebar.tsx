@@ -13,12 +13,16 @@ import {
   MessageSquare,
   Plus,
   LogOut,
-  Zap,
+  Cog,
   LayoutGrid,
   LogIn,
   ChevronLeft,
   ChevronRight,
+  Download,
+  Rocket,
+  ExternalLink,
 } from "lucide-react";
+import { FaCog } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { useProjectStore } from "@/store/useProjectStore";
@@ -41,7 +45,10 @@ export const Sidebar = ({
   const [loading, setLoading] = useState(false);
 
   const supabase = createClient();
-  const { setProject, projectId, triggerRefresh } = useProjectStore();
+  const { setProject, projectId, triggerRefresh, currentCode, isGuest } =
+    useProjectStore();
+  const [deploying, setDeploying] = useState(false);
+  const [deploymentUrl, setDeploymentUrl] = useState<string | null>(null);
 
   const fetchProjects = async (userId: string) => {
     setLoading(true);
@@ -78,7 +85,7 @@ export const Sidebar = ({
     setProject(
       null,
       [],
-      '<!-- Your generated website will appear here -->\n<div style="display:flex;justify-content:center;align-items:center;height:100vh;color:#888;">Waiting for prompt...</div>'
+      '<!-- Your generated website will appear here -->\n<div style="display:flex;justify-content:center;align-items:center;height:100vh;color:#888;">Waiting for prompt...</div>',
     );
   };
 
@@ -90,6 +97,50 @@ export const Sidebar = ({
       .order("created_at", { ascending: true });
 
     setProject(proj.id, messages || [], proj.current_code || "");
+  };
+
+  const handleExport = () => {
+    if (isGuest) {
+      setAuthOpen(true);
+      return;
+    }
+    // Simple download logic for a single HTML file
+    const blob = new Blob([currentCode], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rivets-project-${projectId || "new"}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDeploy = async () => {
+    if (isGuest) {
+      setAuthOpen(true);
+      return;
+    }
+    setDeploying(true);
+    try {
+      const response = await fetch("/api/deploy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: currentCode,
+          projectName:
+            projects.find((p) => p.id === projectId)?.title || "rivets-project",
+        }),
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      setDeploymentUrl(data.url);
+      window.open(data.url, "_blank");
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setDeploying(false);
+    }
   };
 
   return (
@@ -135,11 +186,11 @@ export const Sidebar = ({
           borderRadius="lg"
           boxShadow="0 0 15px rgba(59, 130, 246, 0.5)"
         >
-          <Zap size={20} fill="white" />
+          <FaCog size={20} fill="white" />
         </Box>
         {!isCollapsed && (
           <Text fontSize="xl" fontWeight="bold" letterSpacing="tight">
-            ZappyAI
+            RivetsAI
           </Text>
         )}
       </HStack>
@@ -174,7 +225,7 @@ export const Sidebar = ({
             colorScheme="blue"
             variant="solid"
             w="full"
-            mb={6}
+            mb={2}
             gap={2}
             px={isCollapsed ? 0 : 4}
             justifyContent={isCollapsed ? "center" : "flex-start"}
@@ -192,6 +243,34 @@ export const Sidebar = ({
           </Tooltip.Positioner>
         )}
       </Tooltip.Root>
+
+      {projectId && (
+        <VStack gap={2} mb={6}>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <Button
+                variant="ghost"
+                w="full"
+                size="sm"
+                gap={2}
+                colorPalette="cyan"
+                onClick={handleDeploy}
+                loading={deploying}
+                justifyContent={isCollapsed ? "center" : "flex-start"}
+                _hover={{ transform: "translateY(-1px)" }}
+              >
+                {deploymentUrl ? (
+                  <ExternalLink size={14} />
+                ) : (
+                  <Rocket size={14} />
+                )}
+                {!isCollapsed && (deploymentUrl ? "View Live" : "Deploy Live")}
+              </Button>
+            </Tooltip.Trigger>
+            {isCollapsed && <Tooltip.Content>Deploy</Tooltip.Content>}
+          </Tooltip.Root>
+        </VStack>
+      )}
 
       <VStack
         mt={6}

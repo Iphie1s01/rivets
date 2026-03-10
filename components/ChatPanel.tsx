@@ -134,7 +134,7 @@ export const ChatPanel = () => {
             userMsg,
             { role: "assistant", content: data.explanation },
           ],
-          data.code
+          data.code,
         );
         refreshProjects();
       } else {
@@ -183,7 +183,7 @@ export const ChatPanel = () => {
                 />
                 <Box>
                   <Text fontSize="xl" fontWeight="medium" color="white">
-                    Hi, I'm ZappyAI.
+                    Hi, I'm RivetsAI.
                   </Text>
                   <Text fontSize="sm" opacity={0.7}>
                     Tell me what kind of website you want to build.

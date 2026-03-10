@@ -14,13 +14,14 @@ import {
   SimpleGrid,
 } from "@chakra-ui/react";
 import {
-  Zap,
+  Cog,
   MessageSquare,
   Rocket,
   CheckCircle2,
   ArrowRight,
   Play,
 } from "lucide-react";
+import { FaCog } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 const MotionBox = motion(Box);
@@ -68,10 +69,10 @@ export const LandingPage = ({
             borderRadius="lg"
             boxShadow="0 0 15px rgba(0, 240, 255, 0.5)"
           >
-            <Zap size={20} fill="white" />
+            <FaCog size={20} fill="white" />
           </Box>
           <Text fontSize="xl" fontWeight="bold">
-            ZappyAI
+            RivetsAI
           </Text>
         </HStack>
 
@@ -131,7 +132,7 @@ export const LandingPage = ({
             </Heading>
             <Text fontSize="xl" color="whiteAlpha.700" mb={10}>
               No code. No setup. No frustration. <br />
-              Just type your vision and watch ZappyAI build it in seconds.
+              Just type your vision and watch RivetsAI build it in seconds.
             </Text>
             <Stack
               direction={{ base: "column", sm: "row" }}
@@ -146,7 +147,7 @@ export const LandingPage = ({
                 className="btn-primary"
                 onClick={onStart}
               >
-                Try ZappyAI (Free){" "}
+                Try RivetsAI (Free){" "}
                 <ArrowRight size={20} style={{ marginLeft: "8px" }} />
               </Button>
               <Button
@@ -196,11 +197,11 @@ export const LandingPage = ({
                 {
                   icon: MessageSquare,
                   title: "1. Describe your site",
-                  text: "Tell ZappyAI what you need. A portfolio, a landing page, or a full store.",
+                  text: "Tell RivetsAI what you need. A portfolio, a landing page, or a full store.",
                 },
                 {
-                  icon: Zap,
-                  title: "2. ZappyAI generates it",
+                  icon: Cog,
+                  title: "2. RivetsAI generates it",
                   text: "Watch in real-time as the layout, styles, and content come to life.",
                 },
                 {
@@ -263,7 +264,7 @@ export const LandingPage = ({
                 px={8}
                 onClick={onStart}
               >
-                Experience ZappyAI
+                Experience RivetsAI
               </Button>
             </VStack>
           </MotionBox>
@@ -316,7 +317,7 @@ export const LandingPage = ({
           >
             <Heading size="3xl">Ready to build something?</Heading>
             <Text fontSize="xl" color="whiteAlpha.600">
-              Join thousands of creators using ZappyAI to ship faster.
+              Join thousands of creators using RivetsAI to ship faster.
             </Text>
             <Button
               size="lg"
