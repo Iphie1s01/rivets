@@ -13,16 +13,14 @@ import {
   MessageSquare,
   Plus,
   LogOut,
-  Cog,
   LayoutGrid,
   LogIn,
   ChevronLeft,
   ChevronRight,
-  Download,
   Rocket,
   ExternalLink,
+  Cog,
 } from "lucide-react";
-import { FaCog } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { useProjectStore } from "@/store/useProjectStore";
@@ -99,23 +97,6 @@ export const Sidebar = ({
     setProject(proj.id, messages || [], proj.current_code || "");
   };
 
-  const handleExport = () => {
-    if (isGuest) {
-      setAuthOpen(true);
-      return;
-    }
-    // Simple download logic for a single HTML file
-    const blob = new Blob([currentCode], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `rivets-project-${projectId || "new"}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   const handleDeploy = async () => {
     if (isGuest) {
       setAuthOpen(true);
@@ -146,16 +127,17 @@ export const Sidebar = ({
   return (
     <Box
       h="full"
-      bg="black"
-      color="white"
+      bg="var(--bg)"
+      color="var(--fg)"
       p={isCollapsed ? 2 : 4}
       display="flex"
       flexDirection="column"
       w={isCollapsed ? "60px" : "250px"}
       transition="width 0.2s"
       position="relative"
-      borderRight="1px solid #222"
+      borderRight="1px solid var(--border)"
     >
+      {/* Toggle Button */}
       <IconButton
         aria-label="Toggle Sidebar"
         size="xs"
@@ -164,11 +146,13 @@ export const Sidebar = ({
         top="45px"
         zIndex={10}
         borderRadius="full"
-        bg="gray.800"
-        _hover={{ bg: "gray.700" }}
+        bg="var(--surface2)"
+        border="1px solid var(--border)"
+        color="var(--fg2)"
+        _hover={{ bg: "var(--surface)", color: "var(--fg)" }}
         onClick={onToggle}
       >
-        {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </IconButton>
 
       {/* Brand */}
@@ -179,36 +163,50 @@ export const Sidebar = ({
         cursor="pointer"
         justify={isCollapsed ? "center" : "flex-start"}
         _hover={{ opacity: 0.8 }}
+        transition="opacity 0.2s"
       >
         <Box
-          bg="blue.500"
-          p={1.5}
-          borderRadius="lg"
-          boxShadow="0 0 15px rgba(59, 130, 246, 0.5)"
+          w="36px"
+          h="36px"
+          borderRadius="7px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          flexShrink={0}
         >
-          <FaCog size={20} fill="white" />
+          <Cog size={24} color="var(--accent)" />
         </Box>
         {!isCollapsed && (
-          <Text fontSize="xl" fontWeight="bold" letterSpacing="tight">
+          <Text
+            fontFamily="var(--font-d)"
+            fontSize="16px"
+            fontWeight={700}
+            letterSpacing="-0.02em"
+            color="var(--fg)"
+          >
             RivetsAI
           </Text>
         )}
       </HStack>
 
-      {/* Nav Actions */}
+      {/* Dashboard Nav */}
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
           <Button
             variant="ghost"
-            color="gray.400"
             justifyContent={isCollapsed ? "center" : "flex-start"}
             mb={2}
             gap={2}
-            px={isCollapsed ? 0 : 4}
-            _hover={{ color: "white", bg: "whiteAlpha.100" }}
+            px={isCollapsed ? 0 : 3}
+            h="36px"
+            color="var(--fg2)"
+            _hover={{ color: "var(--fg)", bg: "var(--surface)" }}
             onClick={onViewDashboard}
+            fontSize="13px"
+            fontFamily="var(--font-b)"
+            borderRadius="8px"
           >
-            <LayoutGrid size={16} />
+            <LayoutGrid size={15} />
             {!isCollapsed && "Dashboard"}
           </Button>
         </Tooltip.Trigger>
@@ -219,21 +217,31 @@ export const Sidebar = ({
         )}
       </Tooltip.Root>
 
+      {/* New Project */}
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
           <Button
-            colorScheme="blue"
-            variant="solid"
             w="full"
             mb={2}
             gap={2}
-            px={isCollapsed ? 0 : 4}
+            px={isCollapsed ? 0 : 3}
+            h="36px"
             justifyContent={isCollapsed ? "center" : "flex-start"}
-            bg="linear-gradient(to r, #3B82F6, #8B5CF6)"
-            _hover={{ opacity: 0.9 }}
+            bg="var(--accent)"
+            color="#080C10"
+            fontWeight={600}
+            fontSize="13px"
+            fontFamily="var(--font-b)"
+            borderRadius="8px"
+            _hover={{
+              bg: "#62D5CD",
+              transform: "translateY(-1px)",
+            }}
+            _active={{ transform: "translateY(0)" }}
+            transition="all 0.2s ease"
             onClick={handleNewProject}
           >
-            <Plus size={16} />
+            <Plus size={15} />
             {!isCollapsed && "New Project"}
           </Button>
         </Tooltip.Trigger>
@@ -244,56 +252,68 @@ export const Sidebar = ({
         )}
       </Tooltip.Root>
 
+      {/* Deploy */}
       {projectId && (
-        <VStack gap={2} mb={6}>
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <Button
-                variant="ghost"
-                w="full"
-                size="sm"
-                gap={2}
-                colorPalette="cyan"
-                onClick={handleDeploy}
-                loading={deploying}
-                justifyContent={isCollapsed ? "center" : "flex-start"}
-                _hover={{ transform: "translateY(-1px)" }}
-              >
-                {deploymentUrl ? (
-                  <ExternalLink size={14} />
-                ) : (
-                  <Rocket size={14} />
-                )}
-                {!isCollapsed && (deploymentUrl ? "View Live" : "Deploy Live")}
-              </Button>
-            </Tooltip.Trigger>
-            {isCollapsed && <Tooltip.Content>Deploy</Tooltip.Content>}
-          </Tooltip.Root>
-        </VStack>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <Button
+              variant="ghost"
+              w="full"
+              size="sm"
+              gap={2}
+              mb={2}
+              color="var(--accent)"
+              onClick={handleDeploy}
+              loading={deploying}
+              justifyContent={isCollapsed ? "center" : "flex-start"}
+              px={isCollapsed ? 0 : 3}
+              _hover={{ bg: "var(--accent-dim)", transform: "translateY(-1px)" }}
+              _active={{ transform: "translateY(0)" }}
+              transition="all 0.2s ease"
+              fontSize="13px"
+              fontFamily="var(--font-b)"
+              borderRadius="8px"
+              border="1px solid rgba(78,205,196,0.2)"
+            >
+              {deploymentUrl ? <ExternalLink size={14} /> : <Rocket size={14} />}
+              {!isCollapsed && (deploymentUrl ? "View Live" : "Deploy Live")}
+            </Button>
+          </Tooltip.Trigger>
+          {isCollapsed && <Tooltip.Content>Deploy</Tooltip.Content>}
+        </Tooltip.Root>
       )}
 
+      {/* Recent Projects */}
       <VStack
-        mt={6}
+        mt={4}
         align="stretch"
-        gap={2}
+        gap={1}
         overflowY="auto"
         flex="1"
         display={isCollapsed ? "none" : "flex"}
       >
         <Text
-          fontSize="xs"
-          color="whiteAlpha.500"
-          fontWeight="bold"
+          fontSize="10px"
+          color="var(--fg3)"
+          fontWeight={500}
           textTransform="uppercase"
-          letterSpacing="wider"
+          letterSpacing="0.1em"
+          px={2}
+          mb={1}
+          fontFamily="var(--font-b)"
         >
           Recent Projects
         </Text>
 
-        {loading && <Spinner size="sm" color="whiteAlpha.500" />}
+        {loading && <Spinner size="sm" color="var(--accent)" />}
 
         {!loading && projects.length === 0 && user && (
-          <Text fontSize="xs" color="whiteAlpha.400" px={2}>
+          <Text
+            fontSize="12px"
+            color="var(--fg3)"
+            px={2}
+            fontFamily="var(--font-b)"
+          >
             No projects yet.
           </Text>
         )}
@@ -301,49 +321,61 @@ export const Sidebar = ({
         {projects.map((p) => (
           <Button
             key={p.id}
-            variant={projectId === p.id ? "surface" : "ghost"}
+            variant="ghost"
             justifyContent="flex-start"
-            color={projectId === p.id ? "white" : "whiteAlpha.800"}
-            bg={projectId === p.id ? "whiteAlpha.200" : "transparent"}
-            _hover={{ bg: "whiteAlpha.100" }}
+            color={projectId === p.id ? "var(--fg)" : "var(--fg2)"}
+            bg={projectId === p.id ? "var(--surface)" : "transparent"}
+            border={projectId === p.id ? "1px solid var(--border)" : "1px solid transparent"}
+            _hover={{ bg: "var(--surface)", color: "var(--fg)" }}
             h="auto"
-            py={3}
+            py={2.5}
+            px={3}
             onClick={() => loadProject(p)}
+            borderRadius="8px"
+            fontSize="13px"
+            fontFamily="var(--font-b)"
           >
-            <MessageSquare size={16} style={{ marginRight: "8px" }} />
+            <MessageSquare size={13} style={{ marginRight: "8px", flexShrink: 0 }} />
             <Text truncate>{p.title}</Text>
           </Button>
         ))}
 
         {!user && (
-          <Text fontSize="xs" color="whiteAlpha.400" px={2}>
+          <Text
+            fontSize="12px"
+            color="var(--fg3)"
+            px={2}
+            fontFamily="var(--font-b)"
+          >
             Sign in to save projects.
           </Text>
         )}
       </VStack>
 
       <Spacer />
-
       <AuthModal isOpen={isAuthOpen} onClose={() => setAuthOpen(false)} />
 
+      {/* Auth */}
       {user ? (
         <Tooltip.Root>
           <Tooltip.Trigger asChild>
             <Button
               w="full"
               variant="ghost"
-              color="red.300"
-              px={isCollapsed ? 0 : 4}
+              color="rgba(248,113,113,0.8)"
+              px={isCollapsed ? 0 : 3}
+              h="36px"
               onClick={() => {
                 supabase.auth.signOut();
                 setProject(null, [], "");
               }}
               justifyContent={isCollapsed ? "center" : "flex-start"}
+              _hover={{ bg: "var(--surface)", color: "rgb(248,113,113)" }}
+              fontSize="13px"
+              fontFamily="var(--font-b)"
+              borderRadius="8px"
             >
-              <LogOut
-                size={16}
-                style={{ marginRight: isCollapsed ? 0 : "8px" }}
-              />
+              <LogOut size={14} style={{ marginRight: isCollapsed ? 0 : "8px" }} />
               {!isCollapsed && "Sign Out"}
             </Button>
           </Tooltip.Trigger>
@@ -356,13 +388,19 @@ export const Sidebar = ({
       ) : (
         <Button
           w="full"
-          variant="solid"
-          colorScheme="blue"
-          px={isCollapsed ? 0 : 4}
+          px={isCollapsed ? 0 : 3}
+          h="36px"
           onClick={() => setAuthOpen(true)}
           justifyContent={isCollapsed ? "center" : "flex-start"}
+          bg="var(--surface)"
+          border="1px solid var(--border)"
+          color="var(--fg)"
+          _hover={{ borderColor: "rgba(255,255,255,0.15)", bg: "var(--surface2)" }}
+          fontSize="13px"
+          fontFamily="var(--font-b)"
+          borderRadius="8px"
         >
-          <LogIn size={16} style={{ marginRight: isCollapsed ? 0 : "8px" }} />
+          <LogIn size={14} style={{ marginRight: isCollapsed ? 0 : "8px" }} />
           {!isCollapsed && "Sign In"}
         </Button>
       )}

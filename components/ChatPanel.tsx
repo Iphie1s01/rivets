@@ -3,7 +3,6 @@
 import {
   Box,
   VStack,
-  Input,
   HStack,
   IconButton,
   Text,
@@ -35,9 +34,12 @@ export const ChatPanel = () => {
   } = useProjectStore();
   const [isAuthOpen, setAuthOpen] = useState(false);
   const supabase = createClient();
-
-  // Speech Recognition Reference
+  const bottomRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isGenerating]);
 
   useEffect(() => {
     if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
@@ -55,14 +57,8 @@ export const ChatPanel = () => {
         setIsListening(false);
       };
 
-      recognitionRef.current.onerror = (event: any) => {
-        console.error("Speech Error:", event.error);
-        setIsListening(false);
-      };
-
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
+      recognitionRef.current.onerror = () => setIsListening(false);
+      recognitionRef.current.onend = () => setIsListening(false);
     }
   }, []);
 
@@ -71,7 +67,6 @@ export const ChatPanel = () => {
       alert("Voice input is not supported in this browser.");
       return;
     }
-
     if (isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
@@ -90,17 +85,12 @@ export const ChatPanel = () => {
     }
 
     const userMsg = { role: "user" as const, content: input };
-
-    // Optimistic Update
     addMessage(userMsg);
     incrementMessageCount();
     setInput("");
     setGenerating(true);
 
-    // Check auth
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
 
     try {
       const response = await fetch("/api/chat", {
@@ -113,32 +103,23 @@ export const ChatPanel = () => {
         },
         body: JSON.stringify({
           messages: [...messages, userMsg],
-          projectId, // Pass current project ID
-          userId: session?.user?.id, // Pass user ID to associate new project
-          currentCode, // Pass current code for context (future proofing)
+          projectId,
+          userId: session?.user?.id,
+          currentCode,
         }),
       });
 
       const data = await response.json();
+      if (data.error) throw new Error(data.error);
 
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      // If we just created a NEW project, the API should return the new projectId
       if (data.projectId && data.projectId !== projectId) {
         setProject(
           data.projectId,
-          [
-            ...messages,
-            userMsg,
-            { role: "assistant", content: data.explanation },
-          ],
+          [...messages, userMsg, { role: "assistant", content: data.explanation }],
           data.code,
         );
         refreshProjects();
       } else {
-        // Standard update
         addMessage({ role: "assistant", content: data.explanation });
         setCurrentCode(data.code);
       }
@@ -149,77 +130,94 @@ export const ChatPanel = () => {
     }
   };
 
+  const SUGGESTED_PROMPTS = [
+    "Build a modern portfolio for a frontend developer",
+    "Create a landing page for a SaaS startup",
+    "Design a restaurant website with online booking",
+    "Make a dark-themed blog for a photographer",
+  ];
+
   return (
     <Box
       h="full"
       display="flex"
       flexDirection="column"
-      bg="black"
+      bg="var(--bg)"
       p={4}
-      color="white"
+      gap={3}
     >
       {/* Messages Area */}
       <Box
         flex="1"
         overflowY="auto"
-        mb={4}
-        className="glass-panel-enhanced"
-        borderRadius="2xl"
-        p={6}
+        borderRadius="12px"
+        bg="var(--surface)"
+        border="1px solid var(--border)"
+        p={5}
         position="relative"
-        css={{
-          "&::-webkit-scrollbar-thumb": {
-            background: "rgba(0, 240, 255, 0.3)",
-          },
-        }}
       >
-        <VStack align="stretch" gap={5}>
+        <VStack align="stretch" gap={4}>
           {messages.length === 0 && (
-            <Box textAlign="center" py={12} color="whiteAlpha.500">
-              <VStack gap={6}>
-                <Sparkles
-                  size={40}
-                  style={{ margin: "0 auto", opacity: 0.4 }}
-                />
+            <Box textAlign="center" py={10} color="var(--fg2)">
+              <VStack gap={5}>
+                <Box
+                  w="48px"
+                  h="48px"
+                  borderRadius="12px"
+                  bg="var(--accent-dim)"
+                  border="1px solid rgba(78,205,196,0.2)"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  mx="auto"
+                >
+                  <Sparkles size={22} color="var(--accent)" />
+                </Box>
                 <Box>
-                  <Text fontSize="xl" fontWeight="medium" color="white">
+                  <Text
+                    fontSize="16px"
+                    fontWeight={600}
+                    color="var(--fg)"
+                    fontFamily="var(--font-d)"
+                    mb={1}
+                  >
                     Hi, I'm RivetsAI.
                   </Text>
-                  <Text fontSize="sm" opacity={0.7}>
+                  <Text
+                    fontSize="13px"
+                    color="var(--fg2)"
+                    fontFamily="var(--font-b)"
+                    fontWeight={300}
+                  >
                     Tell me what kind of website you want to build.
                   </Text>
                 </Box>
 
-                <SimpleGrid
-                  columns={{ base: 1, md: 2 }}
-                  gap={3}
-                  w="full"
-                  px={4}
-                >
-                  {[
-                    "Build a modern portfolio for a frontend developer",
-                    "Create a landing page for a SaaS startup",
-                    "Design a restaurant website with online booking",
-                    "Make a dark-themed blog for a photographer",
-                  ].map((prompt, i) => (
+                <SimpleGrid columns={{ base: 1, md: 2 }} gap={2} w="full">
+                  {SUGGESTED_PROMPTS.map((prompt, i) => (
                     <Button
                       key={i}
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      borderColor="whiteAlpha.200"
-                      color="whiteAlpha.700"
+                      border="1px solid var(--border)"
+                      color="var(--fg2)"
+                      bg="var(--surface2)"
                       _hover={{
-                        bg: "whiteAlpha.100",
-                        color: "white",
-                        borderColor: "blue.400",
+                        bg: "var(--accent-dim)",
+                        color: "var(--fg)",
+                        borderColor: "rgba(78,205,196,0.3)",
                       }}
                       onClick={() => setInput(prompt)}
-                      fontSize="xs"
+                      fontSize="12px"
                       h="auto"
-                      py={2}
+                      py={2.5}
                       px={3}
                       whiteSpace="normal"
                       textAlign="left"
+                      borderRadius="8px"
+                      fontFamily="var(--font-b)"
+                      fontWeight={300}
+                      transition="all 0.2s ease"
                     >
                       {prompt}
                     </Button>
@@ -233,52 +231,46 @@ export const ChatPanel = () => {
             <Box
               key={idx}
               alignSelf={msg.role === "user" ? "flex-end" : "flex-start"}
-              maxW="85%"
+              maxW="88%"
             >
               <Box
-                className={
-                  msg.role === "user" ? "" : "glass-panel-enhanced hover-lift"
-                }
                 bg={
                   msg.role === "user"
-                    ? "linear-gradient(135deg, #00f0ff 0%, #0099ff 100%)"
-                    : "rgba(255, 255, 255, 0.03)"
+                    ? "var(--accent)"
+                    : "var(--surface2)"
                 }
-                color={msg.role === "user" ? "black" : "white"}
-                px={msg.role === "user" ? 5 : 6}
-                py={msg.role === "user" ? 3 : 4}
-                borderRadius="2xl"
-                borderBottomRightRadius={msg.role === "user" ? "4px" : "2xl"}
-                borderBottomLeftRadius={msg.role === "user" ? "2xl" : "4px"}
-                border={
-                  msg.role === "user"
-                    ? "none"
-                    : "1px solid rgba(0, 240, 255, 0.2)"
-                }
+                color={msg.role === "user" ? "#080C10" : "var(--fg)"}
+                px={4}
+                py={3}
+                borderRadius={msg.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px"}
+                border={msg.role === "user" ? "none" : "1px solid var(--border)"}
                 boxShadow={
                   msg.role === "user"
-                    ? "0 4px 20px rgba(0, 240, 255, 0.4)"
+                    ? "0 4px 16px rgba(78,205,196,0.25)"
                     : "none"
                 }
               >
                 <Text
-                  fontSize="0.95rem"
-                  fontWeight={msg.role === "user" ? "600" : "400"}
-                  lineHeight="tall"
+                  fontSize="14px"
+                  fontWeight={msg.role === "user" ? 500 : 300}
+                  lineHeight={1.7}
+                  fontFamily="var(--font-b)"
+                  color={msg.role === "user" ? "#080C10" : "var(--fg)"}
                 >
                   {msg.content}
                 </Text>
               </Box>
             </Box>
           ))}
+
           {isGenerating && (
             <Box
               alignSelf="flex-start"
-              bg="rgba(255, 255, 255, 0.05)"
+              bg="var(--surface2)"
+              border="1px solid var(--border)"
               px={4}
               py={3}
-              borderRadius="xl"
-              borderBottomLeftRadius="sm"
+              borderRadius="12px 12px 12px 2px"
             >
               <HStack gap={1}>
                 <span className="typing-dot" />
@@ -287,34 +279,34 @@ export const ChatPanel = () => {
               </HStack>
             </Box>
           )}
+          <div ref={bottomRef} />
         </VStack>
       </Box>
 
       {/* Input Area */}
-      <HStack gap={3} w="full">
+      <HStack gap={2} w="full" align="flex-end">
         <IconButton
           aria-label="Voice Input"
           onClick={toggleListening}
-          h="56px"
-          w="56px"
-          borderRadius="2xl"
-          bg={isListening ? "red.500" : "rgba(0, 240, 255, 0.1)"}
-          color={isListening ? "white" : "#00f0ff"}
+          h="46px"
+          w="46px"
+          borderRadius="10px"
+          bg={isListening ? "rgba(248,113,113,0.15)" : "var(--surface)"}
+          color={isListening ? "rgb(248,113,113)" : "var(--fg2)"}
           border="1px solid"
-          borderColor={isListening ? "red.600" : "rgba(0, 240, 255, 0.3)"}
-          _hover={{
-            bg: isListening ? "red.600" : "rgba(0, 240, 255, 0.2)",
-            borderColor: isListening ? "red.700" : "rgba(0, 240, 255, 0.5)",
-            transform: "scale(1.05)",
-          }}
-          transition="all 0.2s"
-          boxShadow={
-            isListening
-              ? "0 0 20px rgba(239, 68, 68, 0.4)"
-              : "0 0 20px rgba(0, 240, 255, 0.2)"
+          borderColor={
+            isListening ? "rgba(248,113,113,0.4)" : "var(--border)"
           }
+          _hover={{
+            bg: isListening ? "rgba(248,113,113,0.2)" : "var(--surface2)",
+            color: isListening ? "rgb(248,113,113)" : "var(--fg)",
+            borderColor: isListening
+              ? "rgba(248,113,113,0.6)"
+              : "rgba(255,255,255,0.14)",
+          }}
+          transition="all 0.2s ease"
         >
-          {isListening ? <MicOff size={22} /> : <Mic size={22} />}
+          {isListening ? <MicOff size={18} /> : <Mic size={18} />}
         </IconButton>
 
         <Box flex={1} position="relative">
@@ -330,51 +322,52 @@ export const ChatPanel = () => {
             }}
             style={{
               width: "100%",
-              height: "56px",
-              minHeight: "56px",
-              maxHeight: "200px",
-              background: "rgba(0, 240, 255, 0.03)",
-              border: "1px solid rgba(0, 240, 255, 0.2)",
-              borderRadius: "16px",
-              color: "white",
-              padding: "16px 20px",
-              fontSize: "0.95rem",
+              height: "46px",
+              minHeight: "46px",
+              maxHeight: "180px",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: "10px",
+              color: "var(--fg)",
+              padding: "12px 16px",
+              fontSize: "14px",
+              fontFamily: "var(--font-b)",
               outline: "none",
               resize: "none",
               display: "block",
-              transition: "all 0.3s",
-              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
+              transition: "border-color 0.2s, box-shadow 0.2s",
             }}
             onFocus={(e) => {
-              e.target.style.borderColor = "rgba(0, 240, 255, 0.5)";
-              e.target.style.boxShadow = "0 0 30px rgba(0, 240, 255, 0.2)";
+              e.target.style.borderColor = "rgba(78,205,196,0.4)";
+              e.target.style.boxShadow = "0 0 0 3px rgba(78,205,196,0.08)";
             }}
             onBlur={(e) => {
-              e.target.style.borderColor = "rgba(0, 240, 255, 0.2)";
-              e.target.style.boxShadow = "0 4px 20px rgba(0, 0, 0, 0.2)";
+              e.target.style.borderColor = "var(--border)";
+              e.target.style.boxShadow = "none";
             }}
           />
         </Box>
+
         <IconButton
           aria-label="Send"
           onClick={handleSend}
-          h="56px"
-          w="56px"
-          borderRadius="2xl"
-          bg="linear-gradient(135deg, #00f0ff 0%, #0099ff 100%)"
-          color="black"
+          h="46px"
+          w="46px"
+          borderRadius="10px"
+          bg="var(--accent)"
+          color="#080C10"
           _hover={{
-            transform: "translateY(-2px) scale(1.05)",
-            boxShadow: "0 8px 30px rgba(0, 240, 255, 0.5)",
+            bg: "#62D5CD",
+            transform: "translateY(-1px)",
+            boxShadow: "0 6px 20px rgba(78,205,196,0.35)",
           }}
-          _active={{ transform: "translateY(0) scale(1)" }}
-          boxShadow="0 4px 20px rgba(0, 240, 255, 0.4)"
-          transition="all 0.2s"
-          fontWeight="bold"
+          _active={{ transform: "translateY(0)" }}
+          transition="all 0.2s ease"
         >
-          <Send size={22} />
+          <Send size={18} />
         </IconButton>
       </HStack>
+
       <AuthModal isOpen={isAuthOpen} onClose={() => setAuthOpen(false)} />
     </Box>
   );

@@ -80,14 +80,13 @@ export default function Home() {
     <Flex 
       h="100vh" 
       w="full" 
-      bg="black" 
+      bg="var(--bg)" 
       overflow="hidden"
       onMouseMove={resize}
       onMouseUp={stopResizing}
       onMouseLeave={stopResizing}
       position="relative"
     >
-      {/* Overlay to capture mouse events while resizing (fixes iframe issue) */}
       {isResizing && (
         <Box
           position="absolute"
@@ -104,22 +103,19 @@ export default function Home() {
       {view === "landing" && (
         <LandingPage 
           onStart={handleNewProject}
-          onSeeDemo={() => setView("landing")} // Placeholder for demo
+          onSeeDemo={() => setView("landing")} 
           onLogin={() => {
-             // For simplicity, we trigger the login flow via Sidebar/Dashboard
-             // But for Landing, maybe we just go to Dashboard which has AuthModal
              setView("dashboard");
           }}
         />
       )}
 
-      {/* Sidebar */}
       {view === "editor" && (
         <Box
           w={isSidebarCollapsed ? "60px" : "250px"}
           transition={isResizing ? "none" : "width 0.2s"}
           borderRight="1px solid"
-          borderColor="whiteAlpha.100"
+          borderColor="var(--border)"
           display={{ base: "none", md: "block" }}
         >
           <Sidebar
@@ -156,7 +152,7 @@ export default function Home() {
           <Box
             w={{ base: "full", md: `${chatWidth}px` }}
             borderRight="1px solid"
-            borderColor="whiteAlpha.100"
+            borderColor="var(--border)"
             transition={isResizing ? "none" : "width 0.2s"}
           >
             <ChatPanel />
@@ -164,10 +160,10 @@ export default function Home() {
 
           {/* Resize Handle */}
           <Box
-            w="4px"
+            w="2px"
             cursor="col-resize"
-            bg={isResizing ? "blue.500" : "transparent"}
-            _hover={{ bg: "blue.500" }}
+            bg={isResizing ? "var(--accent)" : "transparent"}
+            _hover={{ bg: "var(--accent)" }}
             onMouseDown={startResizing}
             zIndex={10}
             transition="background 0.2s"

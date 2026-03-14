@@ -8,10 +8,11 @@ import {
   DialogBody,
   DialogCloseTrigger,
 } from "@/components/ui/dialog";
-import { Button, Input, VStack, Text, Box } from "@chakra-ui/react";
+import { Button, Input, VStack, Text, Box, HStack } from "@chakra-ui/react";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { useProjectStore } from "@/store/useProjectStore";
+import { Cog } from "lucide-react";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -52,10 +53,9 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       setMessage(
         mode === "signup"
           ? "Account created! You can now save projects."
-          : "Logged in successfully!"
+          : "Logged in successfully!",
       );
 
-      // Transfer Guest Project if it exists
       if (!projectId && messages.length > 0) {
         const { data: newProject } = await supabase
           .from("projects")
@@ -84,51 +84,98 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     setLoading(false);
   };
 
+  const isSuccess =
+    message.toLowerCase().includes("success") ||
+    message.toLowerCase().includes("account created");
+
   return (
     <DialogRoot
       open={isOpen}
       onOpenChange={(e: { open: boolean }) => !e.open && onClose()}
     >
       <DialogContent
-        bg="gray.900"
-        border="1px solid"
-        borderColor="whiteAlpha.100"
+        bg="var(--surface)"
+        border="1px solid var(--border)"
+        borderRadius="16px"
+        boxShadow="0 40px 80px rgba(0,0,0,0.6)"
+        maxW="400px"
       >
-        <DialogHeader>
-          <DialogTitle color="white">
-            {mode === "signup" ? "Create Account" : "Welcome Back"}
-          </DialogTitle>
+        <DialogHeader pb={2}>
+          <HStack gap={3} align="center">
+            <Box
+              w="36px"
+              h="36px"
+              borderRadius="8px"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Cog size={24} color="var(--accent)" />
+            </Box>
+            <DialogTitle
+              fontFamily="var(--font-d)"
+              fontSize="18px"
+              fontWeight={700}
+              color="var(--fg)"
+              letterSpacing="-0.02em"
+            >
+              {mode === "signup" ? "Create Account" : "Welcome Back"}
+            </DialogTitle>
+          </HStack>
         </DialogHeader>
         <DialogBody>
-          <VStack gap={4}>
+          <VStack gap={3}>
+            <Text
+              fontSize="13px"
+              color="var(--fg2)"
+              fontFamily="var(--font-b)"
+              fontWeight={300}
+              alignSelf="flex-start"
+            >
+              {mode === "signup"
+                ? "Sign up to save and manage your projects."
+                : "Sign in to access your projects."}
+            </Text>
             <Input
-              placeholder="Email"
-              bg="whiteAlpha.50"
-              borderColor="whiteAlpha.200"
-              color="white"
+              placeholder="Email address"
+              bg="var(--surface2)"
+              borderColor="var(--border)"
+              color="var(--fg)"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              _focus={{ borderColor: "blue.400" }}
+              borderRadius="8px"
+              fontSize="14px"
+              fontFamily="var(--font-b)"
+              _focus={{
+                borderColor: "rgba(78,205,196,0.5)",
+                boxShadow: "0 0 0 3px rgba(78,205,196,0.08)",
+              }}
+              _placeholder={{ color: "var(--fg3)" }}
             />
             <Input
               placeholder="Password"
               type="password"
-              bg="whiteAlpha.50"
-              borderColor="whiteAlpha.200"
-              color="white"
+              bg="var(--surface2)"
+              borderColor="var(--border)"
+              color="var(--fg)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              _focus={{ borderColor: "blue.400" }}
+              borderRadius="8px"
+              fontSize="14px"
+              fontFamily="var(--font-b)"
+              _focus={{
+                borderColor: "rgba(78,205,196,0.5)",
+                boxShadow: "0 0 0 3px rgba(78,205,196,0.08)",
+              }}
+              _placeholder={{ color: "var(--fg3)" }}
             />
+
             {message && (
               <Text
-                color={
-                  message.toLowerCase().includes("success") ||
-                  message.toLowerCase().includes("account created")
-                    ? "green.400"
-                    : "red.400"
-                }
-                fontSize="sm"
+                color={isSuccess ? "var(--accent)" : "rgba(248,113,113,0.9)"}
+                fontSize="13px"
+                fontFamily="var(--font-b)"
+                alignSelf="flex-start"
               >
                 {message}
               </Text>
@@ -136,38 +183,53 @@ export const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
             <Button
               w="full"
+              h="42px"
               onClick={handleAuth}
               loading={loading}
-              bg="blue.500"
-              _hover={{ bg: "blue.600" }}
-              color="white"
+              bg="var(--accent)"
+              color="#080C10"
+              fontWeight={600}
+              fontSize="14px"
+              fontFamily="var(--font-b)"
+              borderRadius="8px"
+              _hover={{
+                bg: "#62D5CD",
+                transform: "translateY(-1px)",
+                boxShadow: "0 6px 20px rgba(78,205,196,0.3)",
+              }}
+              _active={{ transform: "translateY(0)" }}
+              transition="all 0.2s ease"
             >
               {mode === "signup" ? "Sign Up" : "Log In"}
             </Button>
 
-            <Box textAlign="center" fontSize="sm">
-              <Text color="gray.400">
+            <HStack justify="center" fontSize="13px" gap={1}>
+              <Text color="var(--fg3)" fontFamily="var(--font-b)">
                 {mode === "signup"
                   ? "Already have an account?"
-                  : "Don't have an account?"}{" "}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  color="blue.400"
-                  p={0}
-                  _hover={{ bg: "transparent", textDecoration: "underline" }}
-                  onClick={() => {
-                    setMode(mode === "signup" ? "login" : "signup");
-                    setMessage("");
-                  }}
-                >
-                  {mode === "signup" ? "Log In" : "Sign Up"}
-                </Button>
+                  : "Don't have an account?"}
               </Text>
-            </Box>
+              <Button
+                variant="ghost"
+                size="sm"
+                color="var(--accent)"
+                p={0}
+                h="auto"
+                minW="auto"
+                fontSize="13px"
+                fontFamily="var(--font-b)"
+                _hover={{ bg: "transparent", textDecoration: "underline" }}
+                onClick={() => {
+                  setMode(mode === "signup" ? "login" : "signup");
+                  setMessage("");
+                }}
+              >
+                {mode === "signup" ? "Log In" : "Sign Up"}
+              </Button>
+            </HStack>
           </VStack>
         </DialogBody>
-        <DialogCloseTrigger color="white" />
+        <DialogCloseTrigger color="var(--fg2)" _hover={{ color: "var(--fg)" }} />
       </DialogContent>
     </DialogRoot>
   );

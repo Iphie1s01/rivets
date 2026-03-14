@@ -1,21 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Syne, DM_Sans } from "next/font/google";
 import "./globals.css";
 import Provider from "@/components/ui/provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const syne = Syne({
+  variable: "--font-syne",
   subsets: ["latin"],
+  weight: ["400", "600", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500"],
 });
 
 export const metadata: Metadata = {
-  title: "RivetsAI - Build Websites by Chatting",
-  description: "AI-powered website builder",
+  title: "RivetsAI — Build Websites by Chatting with AI",
+  description: "Type a prompt. Watch your site appear. No code required.",
 };
 
 export default function RootLayout({
@@ -25,9 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${syne.variable} ${dmSans.variable} antialiased`}>
         <Provider>{children}</Provider>
       </body>
     </html>
